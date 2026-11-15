@@ -347,7 +347,14 @@ function showCareers() {
 
   careerData[direction].forEach(career => {
     const li = document.createElement("li");
-    li.textContent = career;
+   
+const btn = document.createElement("button");
+btn.type = "button";
+btn.textContent = career;
+btn.style.margin = "5px 0";
+btn.addEventListener("click", () => showCareerPassport(career));
+li.appendChild(btn);
+
     ul.appendChild(li);
   });
 
@@ -358,6 +365,80 @@ function showCareers() {
     "Бұл мамандықтар танысу үшін ұсынылған. " +
     "Сауалнама нәтижесі мамандыққа жарамдылықты анықтамайды.";
   list.appendChild(note);
+}
+
+const careerPassports = {
+  "Бағдарламашы": {
+    description: "Бағдарламалар мен веб-сайттар әзірлейді.",
+    skills: "Логика, бағдарламалау, мәселе шешу",
+    subjects: "Информатика, математика, ағылшын тілі",
+    task: "HTML көмегімен шағын веб-бет жаса."
+  },
+  "Мұғалім": {
+    description: "Оқушыларға білім беріп, оқу үдерісін ұйымдастырады.",
+    skills: "Түсіндіру, қарым-қатынас, жоспарлау",
+    subjects: "Таңдаған пәні, қазақ тілі, педагогикаға дайындық",
+    task: "Сыныптасыңа 5 минуттық шағын сабақ өткіз."
+  },
+  "Журналист": {
+    description: "Ақпарат жинап, тексеріп, материал дайындайды.",
+    skills: "Жазу, сұхбат алу, ақпаратты тексеру",
+    subjects: "Қазақ тілі, әдебиет, тарих",
+    task: "Мектептегі оқиға туралы шағын мақала жаз."
+  },
+  "Жоба менеджері": {
+    description: "Жобаның мақсатын, міндеттерін және орындалуын үйлестіреді.",
+    skills: "Жоспарлау, командамен жұмыс, коммуникация",
+    subjects: "Математика, информатика, тілдер",
+    task: "Мектеп іс-шарасына бір апталық жоспар жаса."
+  }
+};
+
+function showCareerPassport(career) {
+  const list = document.getElementById("career-list");
+
+  let passport = document.getElementById("passport");
+
+  if (!passport) {
+    passport = document.createElement("div");
+    passport.id = "passport";
+    passport.style.cssText =
+      "margin-top:20px;padding:18px;" +
+      "background:#e9f3fb;border-radius:12px";
+    list.appendChild(passport);
+  }
+
+  const data = careerPassports[career];
+
+  passport.replaceChildren();
+
+  const title = document.createElement("h3");
+  title.textContent = career;
+  passport.appendChild(title);
+
+  if (!data) {
+    const p = document.createElement("p");
+    p.textContent =
+      "Бұл мамандықтың толық сипаттамасы әзірленуде.";
+    passport.appendChild(p);
+    return;
+  }
+
+  const fields = [
+    ["Не істейді?", data.description],
+    ["Қажетті дағдылар", data.skills],
+    ["Маңызды пәндер", data.subjects],
+    ["Кәсіби сынақ", data.task]
+  ];
+
+  fields.forEach(([label, value]) => {
+    const p = document.createElement("p");
+    const strong = document.createElement("strong");
+    strong.textContent = label + ": ";
+    p.appendChild(strong);
+    p.appendChild(document.createTextNode(value));
+    passport.appendChild(p);
+  });
 }
 
 </script>
