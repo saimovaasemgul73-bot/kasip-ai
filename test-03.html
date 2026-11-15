@@ -565,9 +565,54 @@ function showCareerPassport(career) {
     p.appendChild(strong);
     p.appendChild(document.createTextNode(value));
     passport.appendChild(p);
-  });
-}
+});
+ 
+  const planButton = document.createElement("button");
+  planButton.type = "button";
+  planButton.textContent = "Менің жеке даму жоспарым";
+  planButton.style.marginTop = "15px";
 
+  planButton.addEventListener("click", () => {
+    const existing = passport.querySelector(".personal-plan");
+
+    if (existing) {
+      existing.remove();
+      return;
+    }
+
+    const plan = document.createElement("div");
+    plan.className = "personal-plan";
+
+    const heading = document.createElement("h3");
+    heading.textContent = "Менің мақсатым: " + career;
+    plan.appendChild(heading);
+
+    const tasks = [
+      "Мамандық туралы қосымша ақпарат жинау",
+      "Маңызды мектеп пәндерін тереңдетіп оқу",
+      data.task,
+      "Мамандық иесімен сұхбат жүргізу"
+    ];
+
+    tasks.forEach(task => {
+      const label = document.createElement("label");
+      label.style.display = "block";
+      label.style.margin = "12px 0";
+
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+
+      label.appendChild(checkbox);
+      label.appendChild(document.createTextNode(" " + task));
+      plan.appendChild(label);
+    });
+
+    passport.appendChild(plan);
+  });
+
+  passport.appendChild(planButton);
+
+}
 function exploreCareers() {
   document.getElementById("welcome").hidden = true;
   document.getElementById("quiz").hidden = true;
