@@ -737,6 +737,48 @@ function showPortfolio() {
       "Әзірге сақталған жоспар жоқ. Алдымен мамандық таңдап, жеке даму жоспарын ашыңыз.";
     content.appendChild(message);
     return;
+   
+  // Сақталған рефлексияны портфолиоға қосу
+  let reflection = {};
+
+  try {
+    reflection = JSON.parse(
+      localStorage.getItem("kasipai-reflection") || "{}"
+    );
+  } catch (error) {
+    reflection = {};
+  }
+
+  const questions = [
+    ["Неге осы мамандықты таңдадым?", reflection.why],
+    ["Осы мамандық туралы не білдім?", reflection.learned],
+    ["Менің келесі қадамым қандай?", reflection.next]
+  ];
+
+  if (questions.some(([question, answer]) => answer && answer.trim())) {
+    const section = document.createElement("section");
+    section.style.marginTop = "20px";
+
+    const title = document.createElement("h3");
+    title.textContent = "Менің кәсіби таңдауым";
+    section.appendChild(title);
+
+    questions.forEach(([question, answer]) => {
+      if (!answer || !answer.trim()) return;
+
+      const heading = document.createElement("h4");
+      heading.textContent = question;
+      section.appendChild(heading);
+
+      const paragraph = document.createElement("p");
+      paragraph.textContent = answer;
+      paragraph.style.whiteSpace = "pre-wrap";
+      section.appendChild(paragraph);
+    });
+
+    content.appendChild(section);
+  }
+
   }
 
   savedKeys.forEach(key => {
