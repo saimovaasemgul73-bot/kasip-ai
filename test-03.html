@@ -594,18 +594,59 @@ function showCareerPassport(career) {
       "Мамандық иесімен сұхбат жүргізу"
     ];
 
-    tasks.forEach(task => {
-      const label = document.createElement("label");
-      label.style.display = "block";
-      label.style.margin = "12px 0";
+   const storageKey = "kasipai-plan-" + career;
+   
+let saved = [];
 
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
+try {
+  saved = JSON.parse(localStorage.getItem(storageKey) || "[]");
+  if (!Array.isArray(saved)) saved = [];
+} catch (error) {
+  saved = [];
+}
 
-      label.appendChild(checkbox);
-      label.appendChild(document.createTextNode(" " + task));
-      plan.appendChild(label);
-    });
+const progressText = document.createElement("p");
+const progressBar = document.createElement("progress");
+progressBar.max = tasks.length;
+progressBar.style.width = "100%";
+
+function updateProgress() {
+  const boxes = plan.querySelectorAll('input[type="checkbox"]');
+  const values = Array.from(boxes, box => box.checked);
+  const completed = values.filter(Boolean).length;
+  const percent = Math.round(completed / tasks.length * 100);
+
+  progressText.textContent =
+    "Жоспардың орындалуы: " + percent + "% (" +
+    completed + "/" + tasks.length + ")";
+  progressBar.value = completed;
+
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(values));
+  } catch (error) {
+    console.warn("Прогресті сақтау мүмкін болмады.");
+  }
+}
+
+tasks.forEach((task, index) => {
+  const label = document.createElement("label");
+  label.style.display = "block";
+  label.style.margin = "12px 0";
+
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.checked = saved[index] === true;
+  checkbox.addEventListener("change", updateProgress);
+
+  label.appendChild(checkbox);
+  label.appendChild(document.createTextNode(" " + task));
+  plan.appendChild(label);
+});
+
+plan.appendChild(progressText);
+plan.appendChild(progressBar);
+updateProgress();
+
 
     passport.appendChild(plan);
   });
