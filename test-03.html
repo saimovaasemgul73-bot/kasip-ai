@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="kk">
 <head>
@@ -6,65 +7,235 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>КәсіпAI 0.3.0</title>
 <style>
-body {
-  font-family: Arial, sans-serif;
-  background: #f0f5fb;
-  color: #17324c;
-  margin: 0;
-  padding: 20px;
-}
-main {
-  max-width: 760px;
-  margin: 30px auto;
-  background: white;
-  padding: 28px;
-  border-radius: 18px;
-}
-h1 { color: #17679d; }
-a {
-  color: #17679d;
-  font-weight: bold;
-}
-.note {
-  background: #e9f3fb;
-  padding: 16px;
-  border-radius: 10px;
-}
+*{box-sizing:border-box}
+body{margin:0;background:#eef4fa;color:#17324c;font-family:Arial,sans-serif}
+header{background:linear-gradient(120deg,#153c70,#2378aa);color:white;padding:25px;text-align:center}
+main{max-width:760px;margin:24px auto;padding:24px;background:white;border-radius:18px}
+h1{margin:0 0 10px}
+h2{line-height:1.4}
+p{line-height:1.6}
+.note{background:#fff3d9;padding:14px;border-radius:10px;margin:18px 0}
+button{padding:13px 18px;border:0;border-radius:10px;background:#17679d;color:white;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.secondary{background:#e4edf6;color:#17324c}
+.answers{display:grid;gap:9px;margin:22px 0}
+.answers label{display:block;padding:14px;border:1px solid #d2dfeb;border-radius:10px;cursor:pointer}
+.answers label:has(input:checked){background:#d8ecfb;border-color:#17679d}
+.actions{display:flex;justify-content:space-between;gap:10px}
+.progress{height:10px;background:#e4edf6;border-radius:20px;overflow:hidden}
+#fill{height:100%;background:#2588bd;width:0}
+.bar{height:15px;background:#e4edf6;border-radius:20px;overflow:hidden}
+.bar span{display:block;height:100%;background:#2588bd}
+.result{margin:18px 0}
+small{color:#55728b}
+textarea{width:100%;height:170px;padding:12px}
+a{color:#17679d}
+[hidden]{display:none!important}
 </style>
 </head>
 <body>
+<header>
+<h1>КәсіпAI 0.3.0</h1>
+<p>Өзіңді таны • Қызығушылығыңды зертте</p>
+</header>
 <main>
-  <h1>КәсіпAI 0.3.0</h1>
-  <h2>Кәсіби қызығушылықты зерттеу</h2>
+<section id="welcome">
+<h2>Кәсіби қызығушылықты зерттеу</h2>
+<p>8–9-сынып оқушыларына арналған интерактивті сауалнама үлгісі.</p>
+<div class="note">
+<b>Демонстрациялық нұсқа</b>
+<p>30 үлгі сұрақ интерфейсті тексеру үшін жасалған. Бұл O*NET Mini-IP ресми тесті немесе оның валидтелген қазақша аудармасы емес.</p>
+</div>
+<p>Әр әрекетті орындау саған қаншалықты ұнайтынын белгіле. Дұрыс немесе қате жауап жоқ.</p>
+<button onclick="start()">Сауалнаманы бастау</button>
+<p><a href="index.html">КәсіпAI 0.2.0 нұсқасына өту</a></p>
+</section>
 
-  <p>8–9-сынып оқушыларына арналған
-  кәсіптік бағдар платформасы.</p>
+<section id="quiz" hidden>
+<p id="counter"></p>
+<div class="progress"><div id="fill"></div></div>
+<h2 id="question"></h2>
+<p>Бұл әрекет саған қаншалықты ұнайды?</p>
+<div class="answers" id="answers"></div>
+<div class="actions">
+<button class="secondary" id="back" onclick="previous()">Алдыңғы</button>
+<button id="next" onclick="next()">Келесі</button>
+</div>
+</section>
 
-  <h3>Ғылыми негізі</h3>
-  <p>Джон Холландтың RIASEC моделі
-  және O*NET Interest Profiler.</p>
+<section id="results" hidden>
+<h2>Менің қызығушылық картам</h2>
+<div class="note">Бұл нәтижелер тек интерфейсті сынауға арналған. Олар кәсіби жарамдылықты анықтамайды.</div>
+<div id="chart"></div>
+<h3>Нәтижені көшіру</h3>
+<textarea id="summary" readonly></textarea>
+<button onclick="copyResult()">Нәтижені көшіру</button>
+<button class="secondary" onclick="restart()">Қайта бастау</button>
+</section>
 
-  <div class="note">
-    <p><b>30 сұрақтық Mini-IP</b></p>
-    <p>Қазақша бейімдемесі әзірлену үстінде.
-    Бұл нұсқа әлі психометриялық
-    валидациядан өткен жоқ.</p>
-  </div>
-
-  <h3>Ресми әдістеме</h3>
-  <p>
-    <a href="https://www.onetcenter.org/IP.html"
-       target="_blank" rel="noopener noreferrer">
-      O*NET Interest Profiler туралы
-    </a>
-  </p>
-
-  <h3>КәсіпAI 0.2.0 сауалнамасы</h3>
-  <p>
-    <a href="index.html">
-      Қазіргі 24 сұрақтық сауалнамаға өту
-    </a>
-  </p>
+<hr>
+<h3>Ғылыми негіз туралы</h3>
+<p>Жобада Джон Холландтың RIASEC моделі зерттеледі. Ресми O*NET Interest Profiler әдістемесімен танысу үшін:</p>
+<p><a href="https://www.onetcenter.org/IP.html" target="_blank" rel="noopener">O*NET Interest Profiler</a></p>
+<p><a href="https://www.onetcenter.org/license_tools.html" target="_blank" rel="noopener">Лицензия шарттары</a></p>
+<p><small>Бұл демонстрациялық сауалнаманы O*NET немесе АҚШ Еңбек министрлігі мақұлдаған немесе тексерген жоқ. Жауаптар серверге жіберілмейді.</small></p>
 </main>
+
+<script>
+const domains={
+R:"Практикалық-техникалық",
+I:"Зерттеушілік",
+A:"Шығармашылық",
+S:"Әлеуметтік",
+E:"Бастамашылдық",
+C:"Ұйымдастыру"
+};
+
+// Тек интерфейсті тексеруге арналған авторлық мысалдар.
+const groups={
+R:[
+"Қарапайым бұйымды құрастыру",
+"Сынған затты жөндеп көру",
+"Құралдармен жұмыс істеу",
+"Модель немесе макет жасау",
+"Техникалық құрылғыны жинау"
+],
+I:[
+"Ғылыми сұраққа жауап іздеу",
+"Тәжірибе нәтижесін талдау",
+"Құбылыстың себебін зерттеу",
+"Деректерді салыстырып қорытынды жасау",
+"Жаңа ғылыми ақпаратты тексеру"
+],
+A:[
+"Постердің дизайнын жасау",
+"Қысқа әңгіме жазу",
+"Бейнеролик сценарийін ойластыру",
+"Сурет немесе иллюстрация жасау",
+"Шығармашылық жоба әзірлеу"
+],
+S:[
+"Басқа оқушыға тақырып түсіндіру",
+"Біреуге мәселені шешуге көмектесу",
+"Топтағы оқушыларды қолдау",
+"Жаңадан келген оқушыға бағыт көрсету",
+"Білім беру іс-шарасына қатысу"
+],
+E:[
+"Жаңа жоба идеясын ұсыну",
+"Топты ортақ мақсатқа жұмылдыру",
+"Өз идеямды көпшілікке таныстыру",
+"Іс-шараны басқаруға қатысу",
+"Команданы жаңа іске ынталандыру"
+],
+C:[
+"Құжаттарды ретке келтіру",
+"Жұмыс кестесін құрастыру",
+"Ақпаратты кестеге енгізу",
+"Тапсырмалардың орындалуын тіркеу",
+"Мәліметтерді жүйелеп сақтау"
+]
+};
+
+const questions=[];
+for(let i=0;i<5;i++){
+ for(const code of Object.keys(groups)){
+  questions.push({code,text:groups[code][i]});
+ }
+}
+
+const labels=[
+"Мүлде ұнамайды",
+"Ұнамайды",
+"Нақты білмеймін",
+"Ұнайды",
+"Өте ұнайды"
+];
+
+let pos=0;
+let responses=Array(30).fill(null);
+const el=id=>document.getElementById(id);
+
+function show(id){
+ ["welcome","quiz","results"].forEach(x=>{
+  el(x).hidden=x!==id;
+ });
+}
+
+function start(){
+ pos=0;
+ show("quiz");
+ render();
+}
+
+function render(){
+ const q=questions[pos];
+ el("counter").textContent=`Сұрақ ${pos+1} / 30`;
+ el("fill").style.width=((pos+1)/30*100)+"%";
+ el("question").textContent=q.text;
+ el("answers").innerHTML=labels.map((t,i)=>
+ `<label><input type="radio" name="answer" value="${i+1}"
+ ${responses[pos]===i+1?"checked":""}> ${t}</label>`
+ ).join("");
+ el("back").disabled=pos===0;
+ el("next").disabled=responses[pos]===null;
+ el("next").textContent=pos===29?"Нәтижені көру":"Келесі";
+ document.querySelectorAll('input[name="answer"]').forEach(input=>{
+  input.addEventListener("change",()=>{
+   responses[pos]=Number(input.value);
+   el("next").disabled=false;
+  });
+ });
+}
+
+function next(){
+ if(responses[pos]===null)return;
+ if(pos===29){result();return}
+ pos++;
+ render();
+}
+
+function previous(){
+ if(pos>0){pos--;render()}
+}
+
+function result(){
+ show("results");
+ const scores={R:0,I:0,A:0,S:0,E:0,C:0};
+ questions.forEach((q,i)=>{
+  scores[q.code]+=responses[i];
+ });
+ el("chart").innerHTML=Object.entries(scores).map(([code,value])=>
+ `<div class="result">
+ <b>${domains[code]} (${code}) — ${value}/25</b>
+ <div class="bar"><span style="width:${value/25*100}%"></span></div>
+ </div>`
+ ).join("");
+ el("summary").value=
+ "КәсіпAI 0.3.0 — ДЕМО нәтижесі\n"+
+ Object.entries(scores).map(([k,v])=>`${k}: ${v}/25`).join("\n")+
+ "\nБұл ресми психометриялық тест нәтижесі емес.";
+}
+
+function copyResult(){
+ const t=el("summary");
+ t.select();
+ if(navigator.clipboard && window.isSecureContext){
+  navigator.clipboard.writeText(t.value).then(
+   ()=>alert("Нәтиже көшірілді"),
+   ()=>alert("Мәтінді белгілеп, Ctrl+C басыңыз")
+  );
+ }else{
+  document.execCommand("copy");
+  alert("Көшіру әрекеті орындалды. Мәтінді тексеріңіз.");
+ }
+}
+
+function restart(){
+ responses=Array(30).fill(null);
+ pos=0;
+ show("welcome");
+}
+</script>
 </body>
 </html>
