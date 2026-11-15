@@ -126,6 +126,18 @@ a{color:#17679d}
 <button onclick="savePDF()">PDF сақтау</button>
 
 <button class="secondary" onclick="restart()">Қайта бастау</button>
+ 
+<section id="portfolio" style="margin-top:25px; padding:20px; background:#e9f3fb; border-radius:12px;">
+  <h2>Менің кәсіби портфолиом</h2>
+  <p>Таңдаған мамандығымды және жеке даму жоспарымды осы жерден қарай аламын.</p>
+
+  <button type="button" onclick="showPortfolio()">
+    Портфолиомды көрсету
+  </button>
+
+  <div id="portfolio-content" style="margin-top:15px;" aria-live="polite"></div>
+</section>
+
 </section>
 
 <hr>
@@ -677,6 +689,64 @@ function exploreCareers() {
   chart.appendChild(note);
 }
 
+function showPortfolio() {
+  const content = document.getElementById("portfolio-content");
+  content.replaceChildren();
+
+  const title = document.createElement("h3");
+  title.textContent = "Менің кәсіби даму нәтижелерім";
+  content.appendChild(title);
+
+  const savedKeys = Object.keys(localStorage)
+    .filter(key => key.startsWith("kasipai-plan-"));
+
+  if (savedKeys.length === 0) {
+    const message = document.createElement("p");
+    message.textContent =
+      "Әзірге сақталған жоспар жоқ. Алдымен мамандық таңдап, жеке даму жоспарын ашыңыз.";
+    content.appendChild(message);
+    return;
+  }
+
+  savedKeys.forEach(key => {
+    const career = key.replace("kasipai-plan-", "");
+    let tasks;
+
+    try {
+      tasks = JSON.parse(localStorage.getItem(key) || "[]");
+    } catch (error) {
+      return;
+    }
+
+    if (!Array.isArray(tasks) || tasks.length !== 4) return;
+
+    const completed = tasks.filter(value => value === true).length;
+    const percent = Math.round(completed / 4 * 100);
+
+    const card = document.createElement("div");
+    card.style.cssText =
+      "background:white;padding:15px;margin:12px 0;border-radius:10px;";
+
+    const heading = document.createElement("h4");
+    heading.textContent = career;
+    card.appendChild(heading);
+
+    const progress = document.createElement("p");
+    progress.textContent =
+      "Орындалған тапсырмалар: " + completed +
+      "/4 (" + percent + "%)";
+    card.appendChild(progress);
+
+    const bar = document.createElement("progress");
+    bar.max = 4;
+    bar.value = completed;
+    bar.style.width = "100%";
+    card.appendChild(bar);
+
+    content.appendChild(card);
+  });
+}
 </script>
 </body>
 </html>
+
