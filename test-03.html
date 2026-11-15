@@ -95,6 +95,25 @@ a{color:#17679d}
 <h2>Менің қызығушылық картам</h2>
 <div class="note">Бұл нәтижелер тек интерфейсті сынауға арналған. Олар кәсіби жарамдылықты анықтамайды.</div>
 <div id="chart"></div>
+ 
+<section id="career-guide">
+  <h2>Маған қандай мамандықтарды зерттеуге болады?</h2>
+  <p>Қызығушылық бағытын таңдап, мамандықтармен таныс.</p>
+
+  <label for="career-direction">Қызығушылық бағыты:</label>
+  <select id="career-direction" onchange="showCareers()">
+    <option value="">Бағытты таңдаңыз</option>
+    <option value="R">Практикалық-техникалық</option>
+    <option value="I">Зерттеушілік</option>
+    <option value="A">Шығармашылық</option>
+    <option value="S">Әлеуметтік</option>
+    <option value="E">Бастамашылдық</option>
+    <option value="C">Ұйымдастыру</option>
+  </select>
+
+  <div id="career-list" aria-live="polite"></div>
+</section>
+
 <h3>Нәтижені көшіру</h3>
 <textarea id="summary" readonly></textarea>
 <button onclick="copyResult()">Нәтижені көшіру</button>
@@ -270,6 +289,75 @@ function restart(){
  
 function savePDF() {
   window.print();
+}
+
+const careerData = {
+  R: [
+    "Инженер-механик",
+    "Электрик",
+    "Құрылыс инженері",
+    "Робототехника маманы"
+  ],
+  I: [
+    "Ғылыми зерттеуші",
+    "Деректер талдаушысы",
+    "Бағдарламашы",
+    "Биотехнолог"
+  ],
+  A: [
+    "Графикалық дизайнер",
+    "Журналист",
+    "Сәулетші",
+    "Анимация маманы"
+  ],
+  S: [
+    "Мұғалім",
+    "Психолог",
+    "Дәрігер",
+    "Әлеуметтік қызметкер"
+  ],
+  E: [
+    "Жоба менеджері",
+    "Кәсіпкер",
+    "Маркетинг маманы",
+    "Сату менеджері"
+  ],
+  C: [
+    "Бухгалтер",
+    "Құжат айналымы маманы",
+    "Логистика маманы",
+    "Мұрағатшы"
+  ]
+};
+
+function showCareers() {
+  const direction =
+    document.getElementById("career-direction").value;
+  const list = document.getElementById("career-list");
+
+  list.innerHTML = "";
+
+  if (!direction) return;
+
+  const title = document.createElement("h3");
+  title.textContent = "Зерттеуге болатын мамандықтар";
+  list.appendChild(title);
+
+  const ul = document.createElement("ul");
+
+  careerData[direction].forEach(career => {
+    const li = document.createElement("li");
+    li.textContent = career;
+    ul.appendChild(li);
+  });
+
+  list.appendChild(ul);
+
+  const note = document.createElement("p");
+  note.textContent =
+    "Бұл мамандықтар танысу үшін ұсынылған. " +
+    "Сауалнама нәтижесі мамандыққа жарамдылықты анықтамайды.";
+  list.appendChild(note);
 }
 
 </script>
