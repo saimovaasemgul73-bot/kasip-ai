@@ -136,6 +136,13 @@ a{color:#17679d}
   </button>
 
   <div id="portfolio-content" style="margin-top:15px;" aria-live="polite"></div>
+ 
+<button type="button"
+        onclick="savePortfolioPDF()"
+        style="margin-top:15px;">
+  Портфолионы PDF сақтау
+</button>
+
 </section>
 
 </section>
@@ -746,6 +753,53 @@ function showPortfolio() {
     content.appendChild(card);
   });
 }
+ 
+function savePortfolioPDF() {
+  const content = document.getElementById("portfolio-content");
+
+  if (!content || !content.querySelector("div")) {
+    alert("Алдымен «Портфолиомды көрсету» батырмасын басыңыз.");
+    return;
+  }
+
+  const originalTitle = document.title;
+  document.title = "Менің кәсіби портфолиом";
+
+  const style = document.createElement("style");
+  style.id = "portfolio-print-style";
+  style.textContent = `
+    @media print {
+      body > header, #welcome, #quiz,
+      #results > :not(#portfolio) {
+        display: none !important;
+      }
+      #results, #portfolio {
+        display: block !important;
+      }
+      #portfolio button {
+        display: none !important;
+      }
+      #portfolio {
+        background: white !important;
+      }
+      #portfolio-content {
+        display: block !important;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
+
+  const cleanup = () => {
+    style.remove();
+    document.title = originalTitle;
+    window.removeEventListener("afterprint", cleanup);
+  };
+
+  window.addEventListener("afterprint", cleanup);
+  window.print();
+}
+
 </script>
 </body>
 </html>
