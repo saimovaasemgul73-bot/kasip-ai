@@ -1,0 +1,901 @@
+
+
+<!DOCTYPE html>
+<html lang="kk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>КәсіпAI 1.2 — түзетілген нұсқа</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#eef4fa;color:#17324c;font-family:Arial,sans-serif}
+header{background:linear-gradient(120deg,#153c70,#2378aa);color:white;padding:25px;text-align:center}
+main{max-width:760px;margin:24px auto;padding:24px;background:white;border-radius:18px}
+h1{margin:0 0 10px}
+h2{line-height:1.4}
+p{line-height:1.6}
+.note{background:#fff3d9;padding:14px;border-radius:10px;margin:18px 0}
+button{padding:13px 18px;border:0;border-radius:10px;background:#17679d;color:white;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.secondary{background:#e4edf6;color:#17324c}
+.answers{display:grid;gap:9px;margin:22px 0}
+.answers label{display:block;padding:14px;border:1px solid #d2dfeb;border-radius:10px;cursor:pointer}
+.answers label:has(input:checked){background:#d8ecfb;border-color:#17679d}
+.actions{display:flex;justify-content:space-between;gap:10px}
+.progress{height:10px;background:#e4edf6;border-radius:20px;overflow:hidden}
+#fill{height:100%;background:#2588bd;width:0}
+.bar{height:15px;background:#e4edf6;border-radius:20px;overflow:hidden}
+.bar span{display:block;height:100%;background:#2588bd}
+.result{margin:18px 0}
+small{color:#55728b}
+textarea{width:100%;height:170px;padding:12px}
+a{color:#17679d}
+[hidden]{display:none!important}
+ 
+@media print {
+  header, #welcome, #quiz,
+  button, textarea, hr {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+  main {
+    margin: 0;
+    max-width: 100%;
+    padding: 15px;
+  }
+  
+#results[hidden] {
+  display: none !important;
+}
+#results:not([hidden]) {
+  display: block !important;
+}
+
+  .bar, .bar span {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
+</style>
+</head>
+<body>
+<header>
+<h1>КәсіпAI 0.3.0</h1>
+<p>Өзіңді таны • Қызығушылығыңды зертте</p>
+</header>
+<main>
+<section id="welcome">
+<h2>Кәсіби қызығушылықты зерттеу</h2>
+<p>8–9-сынып оқушыларына арналған интерактивті сауалнама үлгісі.</p>
+<div class="note">
+<b>Демонстрациялық нұсқа</b>
+<p>30 үлгі сұрақ интерфейсті тексеру үшін жасалған. Бұл O*NET Mini-IP ресми тесті немесе оның валидтелген қазақша аудармасы емес.</p>
+</div>
+<p>Әр әрекетті орындау саған қаншалықты ұнайтынын белгіле. Дұрыс немесе қате жауап жоқ.</p>
+<button onclick="start()">Сауалнаманы бастау</button>
+ 
+<button type="button" class="secondary" onclick="exploreCareers()">
+  Мамандықтарды зерттеу
+</button>
+
+<p><a href="index.html">КәсіпAI 0.2.0 нұсқасына өту</a></p>
+</section>
+
+<section id="quiz" hidden>
+<p id="counter"></p>
+<div class="progress"><div id="fill"></div></div>
+<h2 id="question"></h2>
+<p>Бұл әрекет саған қаншалықты ұнайды?</p>
+<div class="answers" id="answers"></div>
+<div class="actions">
+<button class="secondary" id="back" onclick="previous()">Алдыңғы</button>
+<button id="next" onclick="next()">Келесі</button>
+</div>
+</section>
+
+<section id="results" hidden>
+<h2>Менің қызығушылық картам</h2>
+<div class="note">Бұл нәтижелер тек интерфейсті сынауға арналған. Олар кәсіби жарамдылықты анықтамайды.</div>
+<div id="chart"></div>
+ 
+<section id="career-guide">
+  <h2>Маған қандай мамандықтарды зерттеуге болады?</h2>
+  <p>Қызығушылық бағытын таңдап, мамандықтармен таныс.</p>
+
+  <label for="career-direction">Қызығушылық бағыты:</label>
+  <select id="career-direction" onchange="showCareers()">
+    <option value="">Бағытты таңдаңыз</option>
+    <option value="R">Практикалық-техникалық</option>
+    <option value="I">Зерттеушілік</option>
+    <option value="A">Шығармашылық</option>
+    <option value="S">Әлеуметтік</option>
+    <option value="E">Бастамашылдық</option>
+    <option value="C">Ұйымдастыру</option>
+  </select>
+
+  <div id="career-list" aria-live="polite"></div>
+</section>
+
+<h3>Нәтижені көшіру</h3>
+<textarea id="summary" readonly></textarea>
+<button onclick="copyResult()">Нәтижені көшіру</button>
+ 
+<button onclick="savePDF()">PDF сақтау</button>
+
+<button class="secondary" onclick="restart()">Қайта бастау</button>
+ 
+<section id="portfolio" style="margin-top:25px; padding:20px; background:#e9f3fb; border-radius:12px;">
+  <h2>Менің кәсіби портфолиом</h2>
+  <p>Таңдаған мамандығымды және жеке даму жоспарымды осы жерден қарай аламын.</p>
+
+  <button type="button" onclick="showPortfolio()">
+    Портфолиомды көрсету
+  </button>
+
+<div id="reflection" style="margin-top:20px;">
+  <h3>Менің кәсіби таңдауым</h3>
+
+  <p>Неге осы мамандықты таңдадым?</p>
+  <textarea id="reflection-why"
+    placeholder="Өз ойыңды жаз..."></textarea>
+
+  <p>Осы мамандық туралы не білдім?</p>
+  <textarea id="reflection-learned"
+    placeholder="Не үйренгеніңді жаз..."></textarea>
+
+  <p>Менің келесі қадамым қандай?</p>
+  <textarea id="reflection-next"
+    placeholder="Алдағы мақсатыңды жаз..."></textarea>
+
+  <p>
+    <button type="button" onclick="saveReflection()">
+      Жауаптарымды сақтау
+    </button>
+  </p>
+
+  <p id="reflection-status" aria-live="polite"></p>
+</div>
+
+  <div id="portfolio-content" style="margin-top:15px;" aria-live="polite"></div>
+ 
+<button type="button"
+        onclick="savePortfolioPDF()"
+        style="margin-top:15px;">
+  Портфолионы PDF сақтау
+</button>
+
+</section>
+
+</section>
+
+<hr>
+<h3>Ғылыми негіз туралы</h3>
+<p>Жобада Джон Холландтың RIASEC моделі зерттеледі. Ресми O*NET Interest Profiler әдістемесімен танысу үшін:</p>
+<p><a href="https://www.onetcenter.org/IP.html" target="_blank" rel="noopener">O*NET Interest Profiler</a></p>
+<p><a href="https://www.onetcenter.org/license_tools.html" target="_blank" rel="noopener">Лицензия шарттары</a></p>
+<p><small>Бұл демонстрациялық сауалнаманы O*NET немесе АҚШ Еңбек министрлігі мақұлдаған немесе тексерген жоқ. Жауаптар серверге жіберілмейді.</small></p>
+</main>
+
+<script>
+const domains={
+R:"Практикалық-техникалық",
+I:"Зерттеушілік",
+A:"Шығармашылық",
+S:"Әлеуметтік",
+E:"Бастамашылдық",
+C:"Ұйымдастыру"
+};
+
+// Тек интерфейсті тексеруге арналған авторлық мысалдар.
+const groups={
+R:[
+"Қарапайым бұйымды құрастыру",
+"Сынған затты жөндеп көру",
+"Құралдармен жұмыс істеу",
+"Модель немесе макет жасау",
+"Техникалық құрылғыны жинау"
+],
+I:[
+"Ғылыми сұраққа жауап іздеу",
+"Тәжірибе нәтижесін талдау",
+"Құбылыстың себебін зерттеу",
+"Деректерді салыстырып қорытынды жасау",
+"Жаңа ғылыми ақпаратты тексеру"
+],
+A:[
+"Постердің дизайнын жасау",
+"Қысқа әңгіме жазу",
+"Бейнеролик сценарийін ойластыру",
+"Сурет немесе иллюстрация жасау",
+"Шығармашылық жоба әзірлеу"
+],
+S:[
+"Басқа оқушыға тақырып түсіндіру",
+"Біреуге мәселені шешуге көмектесу",
+"Топтағы оқушыларды қолдау",
+"Жаңадан келген оқушыға бағыт көрсету",
+"Білім беру іс-шарасына қатысу"
+],
+E:[
+"Жаңа жоба идеясын ұсыну",
+"Топты ортақ мақсатқа жұмылдыру",
+"Өз идеямды көпшілікке таныстыру",
+"Іс-шараны басқаруға қатысу",
+"Команданы жаңа іске ынталандыру"
+],
+C:[
+"Құжаттарды ретке келтіру",
+"Жұмыс кестесін құрастыру",
+"Ақпаратты кестеге енгізу",
+"Тапсырмалардың орындалуын тіркеу",
+"Мәліметтерді жүйелеп сақтау"
+]
+};
+
+const questions=[];
+for(let i=0;i<5;i++){
+ for(const code of Object.keys(groups)){
+  questions.push({code,text:groups[code][i]});
+ }
+}
+
+const labels=[
+"Мүлде ұнамайды",
+"Ұнамайды",
+"Нақты білмеймін",
+"Ұнайды",
+"Өте ұнайды"
+];
+
+let pos=0;
+let responses=Array(30).fill(null);
+const el=id=>document.getElementById(id);
+
+function show(id){
+ ["welcome","quiz","results"].forEach(x=>{
+  el(x).hidden=x!==id;
+ });
+}
+
+function start(){
+ pos=0;
+ show("quiz");
+ render();
+}
+
+function render(){
+ const q=questions[pos];
+ el("counter").textContent=`Сұрақ ${pos+1} / 30`;
+ el("fill").style.width=((pos+1)/30*100)+"%";
+ el("question").textContent=q.text;
+ el("answers").innerHTML=labels.map((t,i)=>
+ `<label><input type="radio" name="answer" value="${i+1}"
+ ${responses[pos]===i+1?"checked":""}> ${t}</label>`
+ ).join("");
+ el("back").disabled=pos===0;
+ el("next").disabled=responses[pos]===null;
+ el("next").textContent=pos===29?"Нәтижені көру":"Келесі";
+ document.querySelectorAll('input[name="answer"]').forEach(input=>{
+  input.addEventListener("change",()=>{
+   responses[pos]=Number(input.value);
+   el("next").disabled=false;
+  });
+ });
+}
+
+function next(){
+ if(responses[pos]===null)return;
+ if(pos===29){result();return}
+ pos++;
+ render();
+}
+
+function previous(){
+ if(pos>0){pos--;render()}
+}
+
+function result(){
+ show("results");
+ const scores={R:0,I:0,A:0,S:0,E:0,C:0};
+ questions.forEach((q,i)=>{
+  scores[q.code]+=responses[i];
+ });
+ el("chart").innerHTML=Object.entries(scores).map(([code,value])=>
+ `<div class="result">
+ <b>${domains[code]} (${code}) — ${value}/25</b>
+ <div class="bar"><span style="width:${value/25*100}%"></span></div>
+ </div>`
+ ).join("");
+ el("summary").value=
+ "КәсіпAI 0.3.0 — ДЕМО нәтижесі\n"+
+ Object.entries(scores).map(([k,v])=>`${k}: ${v}/25`).join("\n")+
+ "\nБұл ресми психометриялық тест нәтижесі емес.";
+}
+
+function copyResult(){
+ const t=el("summary");
+ t.select();
+ if(navigator.clipboard && window.isSecureContext){
+  navigator.clipboard.writeText(t.value).then(
+   ()=>alert("Нәтиже көшірілді"),
+   ()=>alert("Мәтінді белгілеп, Ctrl+C басыңыз")
+  );
+ }else{
+  document.execCommand("copy");
+  alert("Көшіру әрекеті орындалды. Мәтінді тексеріңіз.");
+ }
+}
+
+function restart(){
+ responses=Array(30).fill(null);
+ pos=0;
+ show("welcome");
+}
+ 
+function savePDF() {
+  window.print();
+}
+
+const careerData = {
+  R: [
+    "Инженер-механик",
+    "Электрик",
+    "Құрылыс инженері",
+    "Робототехника маманы"
+  ],
+  I: [
+    "Ғылыми зерттеуші",
+    "Деректер талдаушысы",
+    "Бағдарламашы",
+    "Биотехнолог"
+  ],
+  A: [
+    "Графикалық дизайнер",
+    "Журналист",
+    "Сәулетші",
+    "Анимация маманы"
+  ],
+  S: [
+    "Мұғалім",
+    "Психолог",
+    "Дәрігер",
+    "Әлеуметтік қызметкер"
+  ],
+  E: [
+    "Жоба менеджері",
+    "Кәсіпкер",
+    "Маркетинг маманы",
+    "Сату менеджері"
+  ],
+  C: [
+    "Бухгалтер",
+    "Құжат айналымы маманы",
+    "Логистика маманы",
+    "Мұрағатшы"
+  ]
+};
+
+function showCareers() {
+  const direction =
+    document.getElementById("career-direction").value;
+  const list = document.getElementById("career-list");
+
+  list.innerHTML = "";
+
+  if (!direction) return;
+
+  const title = document.createElement("h3");
+  title.textContent = "Зерттеуге болатын мамандықтар";
+  list.appendChild(title);
+
+  const ul = document.createElement("ul");
+
+  careerData[direction].forEach(career => {
+    const li = document.createElement("li");
+   
+const btn = document.createElement("button");
+btn.type = "button";
+btn.textContent = career;
+btn.style.margin = "5px 0";
+btn.addEventListener("click", () => showCareerPassport(career));
+li.appendChild(btn);
+
+    ul.appendChild(li);
+  });
+
+  list.appendChild(ul);
+
+  const note = document.createElement("p");
+  note.textContent =
+    "Бұл мамандықтар танысу үшін ұсынылған. " +
+    "Сауалнама нәтижесі мамандыққа жарамдылықты анықтамайды.";
+  list.appendChild(note);
+}
+
+const careerPassports = {
+  "Бағдарламашы": {
+    description: "Бағдарламалар мен веб-сайттар әзірлейді.",
+    skills: "Логика, бағдарламалау, мәселе шешу",
+    subjects: "Информатика, математика, ағылшын тілі",
+    task: "HTML көмегімен шағын веб-бет жаса."
+  },
+  "Мұғалім": {
+    description: "Оқушыларға білім беріп, оқу үдерісін ұйымдастырады.",
+    skills: "Түсіндіру, қарым-қатынас, жоспарлау",
+    subjects: "Таңдаған пәні, қазақ тілі, педагогикаға дайындық",
+    task: "Сыныптасыңа 5 минуттық шағын сабақ өткіз."
+  },
+  "Журналист": {
+    description: "Ақпарат жинап, тексеріп, материал дайындайды.",
+    skills: "Жазу, сұхбат алу, ақпаратты тексеру",
+    subjects: "Қазақ тілі, әдебиет, тарих",
+    task: "Мектептегі оқиға туралы шағын мақала жаз."
+  },
+  "Жоба менеджері": {
+    description: "Жобаның мақсатын, міндеттерін және орындалуын үйлестіреді.",
+    skills: "Жоспарлау, командамен жұмыс, коммуникация",
+    subjects: "Математика, информатика, тілдер",
+    task: "Мектеп іс-шарасына бір апталық жоспар жаса."
+  },
+ 
+"Инженер-механик": {
+  description: "Механизмдер мен машиналарды жобалайды және тексереді.",
+  skills: "Техникалық ойлау, сызу, есептеу",
+  subjects: "Математика, физика, информатика",
+  task: "Қарапайым механизмнің қағаз моделін жаса."
+},
+"Электрик": {
+  description: "Электр жүйелерін орнатады және қызмет көрсетеді.",
+  skills: "Мұқияттық, техникалық ойлау, қауіпсіздік",
+  subjects: "Физика, математика",
+  task: "Батарея мен шамның тізбегін қауіпсіз симуляторда құрастыр."
+},
+"Құрылыс инженері": {
+  description: "Ғимараттар мен құрылыстарды жобалауға қатысады.",
+  skills: "Есептеу, жобалау, кеңістіктік ойлау",
+  subjects: "Математика, физика, геометрия",
+  task: "Қағаздан көпір моделін жасап, беріктігін салыстыр."
+},
+"Робототехника маманы": {
+  description: "Роботтар мен автоматтандырылған жүйелерді әзірлейді.",
+  skills: "Бағдарламалау, электроника, логика",
+  subjects: "Информатика, физика, математика",
+  task: "Робот қозғалысының алгоритмін блок-схемамен көрсет."
+},
+"Ғылыми зерттеуші": {
+  description: "Ғылыми сұрақтарды зерттеп, тәжірибе жүргізеді.",
+  skills: "Талдау, бақылау, зерттеу",
+  subjects: "Математика, жаратылыстану пәндері",
+  task: "Бір ғылыми болжам құрып, шағын тәжірибе жаса."
+},
+"Деректер талдаушысы": {
+  description: "Деректерді зерттеп, қорытынды шығарады.",
+  skills: "Статистика, логика, диаграмма жасау",
+  subjects: "Математика, информатика",
+  task: "Сыныптағы анонимді сауалнама нәтижесін диаграммаға түсір."
+},
+"Биотехнолог": {
+  description: "Биологиялық үдерістерді зерттеп, технологиялар әзірлеуге қатысады.",
+  skills: "Зерттеу, бақылау, талдау",
+  subjects: "Биология, химия, математика",
+  task: "Өсімдік өсуіне жарықтың әсерін бақыла."
+},
+"Графикалық дизайнер": {
+  description: "Ақпаратты сурет, түс және композиция арқылы жеткізеді.",
+  skills: "Шығармашылық, композиция, цифрлық дизайн",
+  subjects: "Информатика, бейнелеу өнері",
+  task: "Мектеп іс-шарасына постер әзірле."
+},
+"Сәулетші": {
+  description: "Ғимараттар мен кеңістіктердің жобасын әзірлейді.",
+  skills: "Сызу, шығармашылық, кеңістіктік ойлау",
+  subjects: "Геометрия, математика, бейнелеу өнері",
+  task: "Армандаған мектептің жоспарын сыз."
+},
+"Анимация маманы": {
+  description: "Қозғалмалы бейнелер мен анимациялық көріністер жасайды.",
+  skills: "Сурет салу, сценарий, цифрлық құралдар",
+  subjects: "Информатика, өнер, әдебиет",
+  task: "Бес кадрдан тұратын қысқа анимация жаса."
+},
+"Психолог": {
+  description: "Адамдардың мінез-құлқы мен психологиялық үдерістерін зерттейді.",
+  skills: "Тыңдау, талдау, этика",
+  subjects: "Биология, тілдер, математика",
+  task: "Адамды белсенді тыңдаудың үш тәсілін көрсет."
+},
+"Дәрігер": {
+  description: "Аурулардың алдын алу, анықтау және емдеумен айналысады.",
+  skills: "Жауапкершілік, талдау, қарым-қатынас",
+  subjects: "Биология, химия",
+  task: "Денсаулықты сақтау туралы ақпараттық парақша жаса."
+},
+"Әлеуметтік қызметкер": {
+  description: "Қолдауға мұқтаж адамдарға әлеуметтік көмек ұйымдастырады.",
+  skills: "Қарым-қатынас, жанашырлық, ұйымдастыру",
+  subjects: "Қоғамтану, тілдер, тарих",
+  task: "Мектептегі еріктілік бастамасының жоспарын жаса."
+},
+"Кәсіпкер": {
+  description: "Өнім немесе қызмет идеясын дамытып, іс ұйымдастырады.",
+  skills: "Жоспарлау, қаржы сауаттылығы, коммуникация",
+  subjects: "Математика, информатика, тілдер",
+  task: "Шағын бизнес идеясының шығындарын есепте."
+},
+"Маркетинг маманы": {
+  description: "Тұтынушылар қажеттілігін зерттеп, өнімді таныстыру жолдарын жоспарлайды.",
+  skills: "Талдау, шығармашылық, коммуникация",
+  subjects: "Математика, информатика, тілдер",
+  task: "Мектеп жобасына жарнама жоспарын жаса."
+},
+"Сату менеджері": {
+  description: "Клиенттермен жұмыс істеп, тауар немесе қызмет ұсынады.",
+  skills: "Сөйлесу, келіссөз, ұйымдастыру",
+  subjects: "Математика, тілдер, информатика",
+  task: "Оқу жобасының өнімін таныстыратын қысқа мәтін дайында."
+},
+"Бухгалтер": {
+  description: "Қаржылық операцияларды есепке алып, есеп дайындайды.",
+  skills: "Дәлдік, есептеу, жауапкершілік",
+  subjects: "Математика, информатика",
+  task: "Шартты мектеп іс-шарасының кіріс-шығыс кестесін жаса."
+},
+"Құжат айналымы маманы": {
+  description: "Ұйым құжаттарын тіркеп, жүйелеп, сақталуын бақылайды.",
+  skills: "Ұқыптылық, жүйелеу, цифрлық сауаттылық",
+  subjects: "Қазақ тілі, информатика",
+  task: "Оқу жобасының құжаттарын санаттарға бөліп ретте."
+},
+"Логистика маманы": {
+  description: "Тауарлар мен материалдарды жеткізу үдерісін жоспарлайды.",
+  skills: "Жоспарлау, есептеу, талдау",
+  subjects: "Математика, география, информатика",
+  task: "Үш мекенжайға жеткізудің тиімді бағытын жоспарла."
+},
+"Мұрағатшы": {
+  description: "Құжаттар мен тарихи материалдарды жүйелеп, сақтайды.",
+  skills: "Зерттеу, жүйелеу, мұқияттық",
+  subjects: "Тарих, қазақ тілі, информатика",
+  task: "Мектеп тарихына арналған шағын цифрлық мұрағат жоспарын жаса."
+}
+
+};
+
+function showCareerPassport(career) {
+  const list = document.getElementById("career-list");
+
+  let passport = document.getElementById("passport");
+
+  if (!passport) {
+    passport = document.createElement("div");
+    passport.id = "passport";
+    passport.style.cssText =
+      "margin-top:20px;padding:18px;" +
+      "background:#e9f3fb;border-radius:12px";
+    list.appendChild(passport);
+  }
+
+  const data = careerPassports[career];
+
+  passport.replaceChildren();
+
+  const title = document.createElement("h3");
+  title.textContent = career;
+  passport.appendChild(title);
+
+  if (!data) {
+    const p = document.createElement("p");
+    p.textContent =
+      "Бұл мамандықтың толық сипаттамасы әзірленуде.";
+    passport.appendChild(p);
+    return;
+  }
+
+  const fields = [
+    ["Не істейді?", data.description],
+    ["Қажетті дағдылар", data.skills],
+    ["Маңызды пәндер", data.subjects],
+    ["Кәсіби сынақ", data.task]
+  ];
+
+  fields.forEach(([label, value]) => {
+    const p = document.createElement("p");
+    const strong = document.createElement("strong");
+    strong.textContent = label + ": ";
+    p.appendChild(strong);
+    p.appendChild(document.createTextNode(value));
+    passport.appendChild(p);
+});
+ 
+  const planButton = document.createElement("button");
+  planButton.type = "button";
+  planButton.textContent = "Менің жеке даму жоспарым";
+  planButton.style.marginTop = "15px";
+
+  planButton.addEventListener("click", () => {
+    const existing = passport.querySelector(".personal-plan");
+
+    if (existing) {
+      existing.remove();
+      return;
+    }
+
+    const plan = document.createElement("div");
+    plan.className = "personal-plan";
+
+    const heading = document.createElement("h3");
+    heading.textContent = "Менің мақсатым: " + career;
+    plan.appendChild(heading);
+
+    const tasks = [
+      "Мамандық туралы қосымша ақпарат жинау",
+      "Маңызды мектеп пәндерін тереңдетіп оқу",
+      data.task,
+      "Мамандық иесімен сұхбат жүргізу"
+    ];
+
+   const storageKey = "kasipai-plan-" + career;
+   
+let saved = [];
+
+try {
+  saved = JSON.parse(localStorage.getItem(storageKey) || "[]");
+  if (!Array.isArray(saved)) saved = [];
+} catch (error) {
+  saved = [];
+}
+
+const progressText = document.createElement("p");
+const progressBar = document.createElement("progress");
+progressBar.max = tasks.length;
+progressBar.style.width = "100%";
+
+function updateProgress() {
+  const boxes = plan.querySelectorAll('input[type="checkbox"]');
+  const values = Array.from(boxes, box => box.checked);
+  const completed = values.filter(Boolean).length;
+  const percent = Math.round(completed / tasks.length * 100);
+
+  progressText.textContent =
+    "Жоспардың орындалуы: " + percent + "% (" +
+    completed + "/" + tasks.length + ")";
+  progressBar.value = completed;
+
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(values));
+  } catch (error) {
+    console.warn("Прогресті сақтау мүмкін болмады.");
+  }
+}
+
+tasks.forEach((task, index) => {
+  const label = document.createElement("label");
+  label.style.display = "block";
+  label.style.margin = "12px 0";
+
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.checked = saved[index] === true;
+  checkbox.addEventListener("change", updateProgress);
+
+  label.appendChild(checkbox);
+  label.appendChild(document.createTextNode(" " + task));
+  plan.appendChild(label);
+});
+
+plan.appendChild(progressText);
+plan.appendChild(progressBar);
+updateProgress();
+
+
+    passport.appendChild(plan);
+  });
+
+  passport.appendChild(planButton);
+
+}
+function exploreCareers() {
+  document.getElementById("welcome").hidden = true;
+  document.getElementById("quiz").hidden = true;
+  document.getElementById("results").hidden = false;
+
+  const chart = document.getElementById("chart");
+  chart.replaceChildren();
+
+  const summary = document.getElementById("summary");
+  summary.value = "Сауалнама орындалған жоқ.";
+
+  const direction = document.getElementById("career-direction");
+  direction.value = "";
+
+  const list = document.getElementById("career-list");
+  list.replaceChildren();
+
+  const note = document.createElement("p");
+  note.textContent =
+    "Сауалнамадан өтпей-ақ қызығушылық бағытын таңдап, мамандықтарды зерттей аласыз.";
+  chart.appendChild(note);
+}
+
+function showPortfolio() {
+  const content = document.getElementById("portfolio-content");
+  content.replaceChildren();
+
+  const title = document.createElement("h3");
+  title.textContent = "Менің кәсіби даму нәтижелерім";
+  content.appendChild(title);
+
+  const savedKeys = Object.keys(localStorage)
+    .filter(key => key.startsWith("kasipai-plan-"));
+
+  if (savedKeys.length === 0) {
+    const message = document.createElement("p");
+    message.textContent =
+      "Әзірге сақталған жоспар жоқ. Алдымен мамандық таңдап, жеке даму жоспарын ашыңыз.";
+    content.appendChild(message);
+  }
+
+  savedKeys.forEach(key => {
+    const career = key.replace("kasipai-plan-", "");
+    let tasks;
+
+    try {
+      tasks = JSON.parse(localStorage.getItem(key) || "[]");
+    } catch (error) {
+      return;
+    }
+
+    if (!Array.isArray(tasks) || tasks.length !== 4) return;
+
+    const completed = tasks.filter(value => value === true).length;
+    const percent = Math.round(completed / 4 * 100);
+
+    const card = document.createElement("div");
+    card.style.cssText =
+      "background:white;padding:15px;margin:12px 0;border-radius:10px;";
+
+    const heading = document.createElement("h4");
+    heading.textContent = career;
+    card.appendChild(heading);
+
+    const progress = document.createElement("p");
+    progress.textContent =
+      "Орындалған тапсырмалар: " + completed +
+      "/4 (" + percent + "%)";
+    card.appendChild(progress);
+
+    const bar = document.createElement("progress");
+    bar.max = 4;
+    bar.value = completed;
+    bar.style.width = "100%";
+    card.appendChild(bar);
+
+    content.appendChild(card);
+  });
+
+  // Сақталған рефлексияны PDF-ке жарамды кәдімгі мәтін ретінде көрсету.
+  let reflection = {};
+  try {
+    reflection = JSON.parse(localStorage.getItem("kasipai-reflection") || "{}") || {};
+  } catch (error) {
+    reflection = {};
+  }
+  const answers = [
+    ["Неге осы мамандықты таңдадым?", reflection.why],
+    ["Осы мамандық туралы не білдім?", reflection.learned],
+    ["Менің келесі қадамым қандай?", reflection.next]
+  ];
+  if (answers.some(([, answer]) => typeof answer === "string" && answer.trim())) {
+    const reflectionSection = document.createElement("section");
+    reflectionSection.className = "portfolio-reflection-output";
+    const heading = document.createElement("h3");
+    heading.textContent = "Менің кәсіби таңдауым";
+    reflectionSection.appendChild(heading);
+    answers.forEach(([question, answer]) => {
+      if (typeof answer !== "string" || !answer.trim()) return;
+      const label = document.createElement("h4");
+      label.textContent = question;
+      reflectionSection.appendChild(label);
+      const paragraph = document.createElement("p");
+      paragraph.textContent = answer.trim();
+      paragraph.style.whiteSpace = "pre-wrap";
+      reflectionSection.appendChild(paragraph);
+    });
+    content.appendChild(reflectionSection);
+  }
+}
+ 
+function savePortfolioPDF() {
+  const content = document.getElementById("portfolio-content");
+
+  showPortfolio();
+  if (!content || !content.querySelector("div, .portfolio-reflection-output")) {
+    alert("Алдымен «Портфолиомды көрсету» батырмасын басыңыз.");
+    return;
+  }
+
+  const originalTitle = document.title;
+  document.title = "Менің кәсіби портфолиом";
+
+  const style = document.createElement("style");
+  style.id = "portfolio-print-style";
+  style.textContent = `
+    @media print {
+      body > header, #welcome, #quiz,
+      #results > :not(#portfolio) {
+        display: none !important;
+      }
+      #results, #portfolio {
+        display: block !important;
+      }
+      #portfolio button, #portfolio #reflection {
+        display: none !important;
+      }
+      #portfolio {
+        background: white !important;
+      }
+      #portfolio-content {
+        display: block !important;
+      }
+    }
+  `;
+
+  document.head.appendChild(style);
+
+  const cleanup = () => {
+    style.remove();
+    document.title = originalTitle;
+    window.removeEventListener("afterprint", cleanup);
+  };
+
+  window.addEventListener("afterprint", cleanup);
+  window.print();
+}
+
+function saveReflection() {
+  const reflection = {
+    why: document.getElementById("reflection-why").value,
+    learned: document.getElementById("reflection-learned").value,
+    next: document.getElementById("reflection-next").value
+  };
+
+  const status = document.getElementById("reflection-status");
+
+  try {
+    localStorage.setItem(
+      "kasipai-reflection",
+      JSON.stringify(reflection)
+    );
+    status.textContent = "Жауаптарыңыз сақталды!";
+    showPortfolio();
+  } catch (error) {
+    status.textContent = "Сақтау мүмкін болмады.";
+  }
+}
+
+function loadReflection() {
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem("kasipai-reflection") || "{}"
+    );
+
+    document.getElementById("reflection-why").value =
+      saved.why || "";
+    document.getElementById("reflection-learned").value =
+      saved.learned || "";
+    document.getElementById("reflection-next").value =
+      saved.next || "";
+  } catch (error) {
+    console.warn("Жауаптарды оқу мүмкін болмады.");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", loadReflection);
+
+</script>
+</body>
+</html>
+
