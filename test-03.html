@@ -135,6 +135,30 @@ a{color:#17679d}
     Портфолиомды көрсету
   </button>
 
+<div id="reflection" style="margin-top:20px;">
+  <h3>Менің кәсіби таңдауым</h3>
+
+  <p>Неге осы мамандықты таңдадым?</p>
+  <textarea id="reflection-why"
+    placeholder="Өз ойыңды жаз..."></textarea>
+
+  <p>Осы мамандық туралы не білдім?</p>
+  <textarea id="reflection-learned"
+    placeholder="Не үйренгеніңді жаз..."></textarea>
+
+  <p>Менің келесі қадамым қандай?</p>
+  <textarea id="reflection-next"
+    placeholder="Алдағы мақсатыңды жаз..."></textarea>
+
+  <p>
+    <button type="button" onclick="saveReflection()">
+      Жауаптарымды сақтау
+    </button>
+  </p>
+
+  <p id="reflection-status" aria-live="polite"></p>
+</div>
+
   <div id="portfolio-content" style="margin-top:15px;" aria-live="polite"></div>
  
 <button type="button"
@@ -799,6 +823,45 @@ function savePortfolioPDF() {
   window.addEventListener("afterprint", cleanup);
   window.print();
 }
+
+function saveReflection() {
+  const reflection = {
+    why: document.getElementById("reflection-why").value,
+    learned: document.getElementById("reflection-learned").value,
+    next: document.getElementById("reflection-next").value
+  };
+
+  const status = document.getElementById("reflection-status");
+
+  try {
+    localStorage.setItem(
+      "kasipai-reflection",
+      JSON.stringify(reflection)
+    );
+    status.textContent = "Жауаптарыңыз сақталды!";
+  } catch (error) {
+    status.textContent = "Сақтау мүмкін болмады.";
+  }
+}
+
+function loadReflection() {
+  try {
+    const saved = JSON.parse(
+      localStorage.getItem("kasipai-reflection") || "{}"
+    );
+
+    document.getElementById("reflection-why").value =
+      saved.why || "";
+    document.getElementById("reflection-learned").value =
+      saved.learned || "";
+    document.getElementById("reflection-next").value =
+      saved.next || "";
+  } catch (error) {
+    console.warn("Жауаптарды оқу мүмкін болмады.");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", loadReflection);
 
 </script>
 </body>
