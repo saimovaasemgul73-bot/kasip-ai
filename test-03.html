@@ -31,6 +31,34 @@ small{color:#55728b}
 textarea{width:100%;height:170px;padding:12px}
 a{color:#17679d}
 [hidden]{display:none!important}
+ 
+@media print {
+  header, #welcome, #quiz,
+  button, textarea, hr {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+  main {
+    margin: 0;
+    max-width: 100%;
+    padding: 15px;
+  }
+  
+#results[hidden] {
+  display: none !important;
+}
+#results:not([hidden]) {
+  display: block !important;
+}
+
+  .bar, .bar span {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -70,6 +98,9 @@ a{color:#17679d}
 <h3>Нәтижені көшіру</h3>
 <textarea id="summary" readonly></textarea>
 <button onclick="copyResult()">Нәтижені көшіру</button>
+ 
+<button onclick="savePDF()">PDF сақтау</button>
+
 <button class="secondary" onclick="restart()">Қайта бастау</button>
 </section>
 
@@ -236,6 +267,11 @@ function restart(){
  pos=0;
  show("welcome");
 }
+ 
+function savePDF() {
+  window.print();
+}
+
 </script>
 </body>
 </html>
