@@ -76,6 +76,11 @@ a{color:#17679d}
 </div>
 <p>Әр әрекетті орындау саған қаншалықты ұнайтынын белгіле. Дұрыс немесе қате жауап жоқ.</p>
 <button onclick="start()">Сауалнаманы бастау</button>
+ 
+<button type="button" class="secondary" onclick="exploreCareers()">
+  Мамандықтарды зерттеу
+</button>
+
 <p><a href="index.html">КәсіпAI 0.2.0 нұсқасына өту</a></p>
 </section>
 
@@ -561,6 +566,29 @@ function showCareerPassport(career) {
     p.appendChild(document.createTextNode(value));
     passport.appendChild(p);
   });
+}
+
+function exploreCareers() {
+  document.getElementById("welcome").hidden = true;
+  document.getElementById("quiz").hidden = true;
+  document.getElementById("results").hidden = false;
+
+  const chart = document.getElementById("chart");
+  chart.replaceChildren();
+
+  const summary = document.getElementById("summary");
+  summary.value = "Сауалнама орындалған жоқ.";
+
+  const direction = document.getElementById("career-direction");
+  direction.value = "";
+
+  const list = document.getElementById("career-list");
+  list.replaceChildren();
+
+  const note = document.createElement("p");
+  note.textContent =
+    "Сауалнамадан өтпей-ақ қызығушылық бағытын таңдап, мамандықтарды зерттей аласыз.";
+  chart.appendChild(note);
 }
 
 </script>
